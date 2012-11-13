@@ -1,0 +1,33 @@
+# Autoconfigured by chef in the dhcp-server cookbook
+
+ddns-update-style <%= node["dhcp"]["ddns-update-style"] %>;
+
+# option definitions common to all supported networks...
+<% if node["dhcp"]["domain-name"] -%>
+option domain-name "<%= node["dhcp"]["domain-name"] %>";
+<% end -%>
+<% if node["dhcp"]["domain-name-servers"] -%>
+option domain-name-servers <%= node["dhcp"]["domain-name-servers"].join(", ") %>;
+<% end -%>
+
+default-lease-time <%= node["dhcp"]["default-lease-time"] %>;
+max-lease-time <%= node["dhcp"]["max-lease-time"] %>;
+
+# If this DHCP server is the official DHCP server for the local
+# network, the authoritative directive should be uncommented.
+<%= "authorative;" if node["dhcp"]["authorative"] %>
+
+<% if node["dhcp"]["allow-booting"] %>allow booting; <% end%>
+# Use this to send dhcp log messages to a different log file (you also
+# have to hack syslog.conf to complete the redirection).
+log-facility local7;
+
+<% node["dhcp"]["subnets"].each do |subnet| -%>
+subnet <%= subnet["network"] %> netmask <%= subnet["netmask"] || "255.255.255.0" %> {
+  range <%= subnet["from"] %> <%= subnet["to"] %>;
+  option routers <%= subnet["routers"] %>;
+  <% if subnet["next-server"] %>next-server <%= subnet["next-server"] %>;<% end %>
+  <% if subnet["filename"] %>filename "<%= subnet["filename"]%>";<% end %>
+}
+<% end -%>
+
